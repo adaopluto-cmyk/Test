@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SENTINEL Stock Card</title>
+
+<style>
+body {
+  background: #f6f7f9;
+  font-family: Arial, sans-serif;
+  display: flex;
+  justify-content: center;
+  padding: 40px;
+}
+
+.card {
+  width: 460px;
+  background: white;
+  border-radius: 14px;
+  border: 1px solid #e6e6e6;
+  padding: 18px;
+}
+
+/* HEADER */
+.header {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.logo {
+  width: 40px;
+  height: 40px;
+  background: #ddd;
+  border-radius: 8px;
+}
+
+.header h2 {
+  margin: 0;
+}
+
+.header p {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: #666;
+}
+
+/* SIGNAL */
+.signal {
+  margin-top: 14px;
+}
+
+.signal h1 {
+  font-size: 28px;
+  margin: 0;
+}
+
+.score {
+  font-size: 14px;
+  color: #666;
+}
+
+.signal p {
+  margin: 4px 0 0;
+  color: #444;
+}
+
+/* PRICE */
+.price {
+  margin-top: 12px;
+}
+
+.price h2 {
+  margin: 0;
+}
+
+.green {
+  color: #1a9c4a;
+}
+
+/* METRICS */
+.metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.group {
+  background: #fafafa;
+  padding: 10px;
+  border-radius: 10px;
+}
+
+.group h4 {
+  margin: 0 0 6px;
+  font-size: 12px;
+  color: #777;
+}
+
+.group p {
+  margin: 2px 0;
+  font-size: 13px;
+}
+
+/* ANALYST */
+.analyst {
+  margin-top: 14px;
+  font-size: 13px;
+  padding: 10px;
+  background: #f9fbff;
+  border-radius: 10px;
+}
+
+/* RANGE */
+.range {
+  margin-top: 14px;
+  font-size: 12px;
+}
+
+.bar {
+  height: 6px;
+  background: #eee;
+  border-radius: 10px;
+  position: relative;
+  margin-top: 6px;
+}
+
+.marker {
+  width: 10px;
+  height: 10px;
+  background: #1a9c4a;
+  border-radius: 50%;
+  position: absolute;
+  top: -2px;
+  left: 65%;
+}
+
+/* SUMMARY */
+.summary {
+  margin-top: 14px;
+  font-size: 13px;
+  color: #333;
+  padding: 10px;
+  border-left: 3px solid #1a9c4a;
+  background: #f6fff8;
+}
+
+.badge {
+  display: inline-block;
+  padding: 4px 8px;
+  font-size: 11px;
+  border-radius: 6px;
+  background: #e8f5ee;
+  color: #1a9c4a;
+}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="logo"></div>
+    <div>
+      <h2>AAPL</h2>
+      <p>Apple Inc. • Technology • NASDAQ</p>
+    </div>
+  </div>
+
+  <!-- SIGNAL -->
+  <div class="signal">
+    <h1>BUY <span class="score">(78/100)</span></h1>
+    <span class="badge">Strong Opportunity</span>
+    <p>Strong fundamentals with moderate upside potential</p>
+  </div>
+
+  <!-- PRICE -->
+  <div class="price">
+    <h2>$213.49 <span class="green">+1.24%</span></h2>
+    <p style="font-size:12px;color:#666;">30-Day Trend: +29.88%</p>
+  </div>
+
+  <!-- METRICS -->
+  <div class="metrics">
+
+    <div class="group">
+      <h4>Valuation</h4>
+      <p>P/E: 33.2</p>
+    </div>
+
+    <div class="group">
+      <h4>Growth</h4>
+      <p>Revenue: +5.1%</p>
+      <p>EPS: +10.7%</p>
+    </div>
+
+    <div class="group">
+      <h4>Profitability</h4>
+      <p>Margin: 26.4%</p>
+      <p>EPS: 6.43</p>
+    </div>
+
+    <div class="group">
+      <h4>Risk</h4>
+      <p>Beta: 1.24</p>
+    </div>
+
+    <div class="group">
+      <h4>Income</h4>
+      <p>Dividend: 0.5%</p>
+    </div>
+
+  </div>
+
+  <!-- ANALYST -->
+  <div class="analyst">
+    <b>Analyst Target:</b> $237.50 (+11.2%)  
+    <br><br>
+    <span style="color:#666;">Long-term outlook: quality growth at premium valuation</span>
+  </div>
+
+  <!-- RANGE -->
+  <div class="range">
+    <p>52W Range: 164 → 237</p>
+    <div class="bar">
+      <div class="marker"></div>
+    </div>
+  </div>
+
+  <!-- SUMMARY -->
+  <div class="summary">
+    <b>Summary:</b> Strong earnings growth and high margins, but valuation is elevated with moderate upside remaining.
+  </div>
+
+</div>
+
+</body>
+</html>
