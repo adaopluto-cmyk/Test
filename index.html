@@ -1,240 +1,239 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>SENTINEL Stock Card</title>
-
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FHI Framework - Redesign</title>
 <style>
-body {
-  background: #f6f7f9;
-  font-family: Arial, sans-serif;
-  display: flex;
-  justify-content: center;
-  padding: 40px;
-}
+  /* Import Google Fonts */
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@600&family=JetBrains+Mono:wght@400;500&display=swap');
 
-.card {
-  width: 460px;
-  background: white;
-  border-radius: 14px;
-  border: 1px solid #e6e6e6;
-  padding: 18px;
-}
+  :root {
+    --bg-dark: #0A0A0C;
+    --bg-card: #121214;
+    --accent: #D4F870;
+    --accent-hover: #bde058;
+    --text-main: #FFFFFF;
+    --text-muted: #8A8D98;
+    --text-dim: #3A3D45;
+    --border-color: #2A2C35;
+  }
 
-/* HEADER */
-.header {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
+  body {
+    background-color: #050505; /* Slightly darker body to make the card pop */
+    color: var(--text-main);
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
+  }
 
-.logo {
-  width: 40px;
-  height: 40px;
-  background: #ddd;
-  border-radius: 8px;
-}
+  .app-container {
+    background-color: var(--bg-dark);
+    width: 100%;
+    max-width: 420px;
+    padding: 40px;
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.75);
+  }
 
-.header h2 {
-  margin: 0;
-}
+  /* --- Header --- */
+  header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 40px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border-color);
+  }
 
-.header p {
-  margin: 2px 0 0;
-  font-size: 12px;
-  color: #666;
-}
+  .logo {
+    background-color: var(--accent);
+    color: var(--bg-dark);
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: 600;
+    font-size: 1.25rem;
+    font-family: 'Playfair Display', serif;
+  }
 
-/* SIGNAL */
-.signal {
-  margin-top: 14px;
-}
+  .title-group h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.35rem;
+    margin: 0 0 4px 0;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
 
-.signal h1 {
-  font-size: 28px;
-  margin: 0;
-}
+  .title-group p {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 2px;
+    color: var(--text-muted);
+    margin: 0;
+    text-transform: uppercase;
+  }
 
-.score {
-  font-size: 14px;
-  color: #666;
-}
+  /* --- Input Section --- */
+  .input-section {
+    margin-bottom: 56px;
+  }
 
-.signal p {
-  margin: 4px 0 0;
-  color: #444;
-}
+  .input-label {
+    display: block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 1.5px;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+    text-transform: uppercase;
+  }
 
-/* PRICE */
-.price {
-  margin-top: 12px;
-}
+  .input-row {
+    display: flex;
+    gap: 12px;
+  }
 
-.price h2 {
-  margin: 0;
-}
+  input[type="text"] {
+    flex-grow: 1;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    padding: 14px 16px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-family: 'Inter', sans-serif;
+    outline: none;
+    transition: all 0.2s ease;
+  }
 
-.green {
-  color: #1a9c4a;
-}
+  input[type="text"]:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent);
+  }
 
-/* METRICS */
-.metrics {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-top: 16px;
-}
+  button {
+    background-color: var(--accent);
+    color: var(--bg-dark);
+    border: none;
+    padding: 0 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+  }
 
-.group {
-  background: #fafafa;
-  padding: 10px;
-  border-radius: 10px;
-}
+  button:hover {
+    background-color: var(--accent-hover);
+    transform: translateY(-1px);
+  }
 
-.group h4 {
-  margin: 0 0 6px;
-  font-size: 12px;
-  color: #777;
-}
+  button:active {
+    transform: translateY(1px);
+  }
 
-.group p {
-  margin: 2px 0;
-  font-size: 13px;
-}
+  /* --- Progress Section --- */
+  .progress-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
 
-/* ANALYST */
-.analyst {
-  margin-top: 14px;
-  font-size: 13px;
-  padding: 10px;
-  background: #f9fbff;
-  border-radius: 10px;
-}
+  .spinner {
+    width: 44px;
+    height: 44px;
+    border: 2px solid var(--border-color);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 1s cubic-bezier(0.55, 0.15, 0.45, 0.85) infinite;
+    margin-bottom: 32px;
+  }
 
-/* RANGE */
-.range {
-  margin-top: 14px;
-  font-size: 12px;
-}
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
 
-.bar {
-  height: 6px;
-  background: #eee;
-  border-radius: 10px;
-  position: relative;
-  margin-top: 6px;
-}
+  .status-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    max-width: 300px; /* Constrain width to stagger the text nicely */
+  }
 
-.marker {
-  width: 10px;
-  height: 10px;
-  background: #1a9c4a;
-  border-radius: 50%;
-  position: absolute;
-  top: -2px;
-  left: 65%;
-}
+  .status-list li {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: color 0.3s ease;
+  }
 
-/* SUMMARY */
-.summary {
-  margin-top: 14px;
-  font-size: 13px;
-  color: #333;
-  padding: 10px;
-  border-left: 3px solid #1a9c4a;
-  background: #f6fff8;
-}
+  /* States */
+  .status-list .done { color: var(--accent); }
+  .status-list .active { color: var(--text-main); animation: pulse 2s infinite; }
+  .status-list .pending { color: var(--text-dim); }
 
-.badge {
-  display: inline-block;
-  padding: 4px 8px;
-  font-size: 11px;
-  border-radius: 6px;
-  background: #e8f5ee;
-  color: #1a9c4a;
-}
+  /* Indentation to mimic the original image */
+  .status-list li:nth-child(2) { margin-left: 16px; }
+  .status-list li:nth-child(3) { margin-left: 32px; }
+  .status-list li:nth-child(4) { margin-left: 32px; }
+  .status-list li:nth-child(5) { margin-left: 32px; }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
 </style>
 </head>
-
 <body>
 
-<div class="card">
-
-  <!-- HEADER -->
-  <div class="header">
-    <div class="logo"></div>
-    <div>
-      <h2>AAPL</h2>
-      <p>Apple Inc. • Technology • NASDAQ</p>
+<div class="app-container">
+  
+  <header>
+    <div class="logo">F</div>
+    <div class="title-group">
+      <h1>FHI Framework</h1>
+      <p>Financial Health Investment</p>
     </div>
-  </div>
+  </header>
 
-  <!-- SIGNAL -->
-  <div class="signal">
-    <h1>BUY <span class="score">(78/100)</span></h1>
-    <span class="badge">Strong Opportunity</span>
-    <p>Strong fundamentals with moderate upside potential</p>
-  </div>
-
-  <!-- PRICE -->
-  <div class="price">
-    <h2>$213.49 <span class="green">+1.24%</span></h2>
-    <p style="font-size:12px;color:#666;">30-Day Trend: +29.88%</p>
-  </div>
-
-  <!-- METRICS -->
-  <div class="metrics">
-
-    <div class="group">
-      <h4>Valuation</h4>
-      <p>P/E: 33.2</p>
+  <main>
+    <div class="input-section">
+      <label class="input-label" for="company">Company Name</label>
+      <div class="input-row">
+        <input type="text" id="company" value="Tsmc" spellcheck="false" />
+        <button>Analyze &rarr;</button>
+      </div>
     </div>
 
-    <div class="group">
-      <h4>Growth</h4>
-      <p>Revenue: +5.1%</p>
-      <p>EPS: +10.7%</p>
+    <div class="progress-section">
+      <div class="spinner"></div>
+      <ul class="status-list">
+        <li class="done">✓ Searching financial databases...</li>
+        <li class="active">› Parsing income statement...</li>
+        <li class="pending">· Analyzing balance sheet...</li>
+        <li class="pending">· Computing ratios...</li>
+        <li class="pending">· Writing investment memo...</li>
+      </ul>
     </div>
-
-    <div class="group">
-      <h4>Profitability</h4>
-      <p>Margin: 26.4%</p>
-      <p>EPS: 6.43</p>
-    </div>
-
-    <div class="group">
-      <h4>Risk</h4>
-      <p>Beta: 1.24</p>
-    </div>
-
-    <div class="group">
-      <h4>Income</h4>
-      <p>Dividend: 0.5%</p>
-    </div>
-
-  </div>
-
-  <!-- ANALYST -->
-  <div class="analyst">
-    <b>Analyst Target:</b> $237.50 (+11.2%)  
-    <br><br>
-    <span style="color:#666;">Long-term outlook: quality growth at premium valuation</span>
-  </div>
-
-  <!-- RANGE -->
-  <div class="range">
-    <p>52W Range: 164 → 237</p>
-    <div class="bar">
-      <div class="marker"></div>
-    </div>
-  </div>
-
-  <!-- SUMMARY -->
-  <div class="summary">
-    <b>Summary:</b> Strong earnings growth and high margins, but valuation is elevated with moderate upside remaining.
-  </div>
+  </main>
 
 </div>
 
