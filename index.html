@@ -1,254 +1,574 @@
-This is a great starting point. The current UI has a sleek, "terminal-meets-fintech" aesthetic that feels very focused and professional. The lime green accent against the dark background provides excellent contrast.
-However, we can elevate this design by tightening up the typography, improving the visual grouping of elements, and adding more intentional state indicators for the loading process.
-Here is a conceptual breakdown of the redesign, followed by the HTML/CSS code you can use to implement it.
-### **Design Improvements**
- * **Typography Unification:** The original image mixes a serif font (FHI Framework) with sans-serif and monospace fonts. In the redesign, I paired a classic serif (**Playfair Display**) for the title to maintain that traditional "financial trust" feel, while using a clean sans-serif (**Inter**) for inputs/buttons, and a monospace font exclusively for the progress logs to keep the developer/terminal vibe.
- * **Component Grouping:** The input field and the "Analyze" button are now visually paired on the same line. This makes the action feel directly connected to the input.
- * **State Animation:** The progress list now has distinct visual states. Completed tasks are lime green, the *active* task pulses gently in white, and pending tasks are dimmed out.
- * **Polished Borders & Focus States:** The input field now features a subtle focus ring when clicked, and the button has a tactile hover state.
-### **The Redesign Code (HTML & CSS)**
-You can save this code as an .html file and open it in any browser to see the live redesign. It requires no external frameworks, just pure CSS.
-```html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FHI Framework - Redesign</title>
-<style>
-  /* Import Google Fonts */
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@600&family=JetBrains+Mono:wght@400;500&display=swap');
+import { useState, useEffect, useRef } from "react";
 
-  :root {
-    --bg-dark: #0A0A0C;
-    --bg-card: #121214;
-    --accent: #D4F870;
-    --accent-hover: #bde058;
-    --text-main: #FFFFFF;
-    --text-muted: #8A8D98;
-    --text-dim: #3A3D45;
-    --border-color: #2A2C35;
-  }
+/* ── Palette ── */
+const C = {
+  bg:       "#0a0e14",
+  panel:    "#0d1219",
+  card:     "#101720",
+  border:   "#1a2535",
+  accent:   "#c8f135",
+  teal:     "#00e5c8",
+  dim:      "#3a4d63",
+  muted:    "#5a7090",
+  text:     "#d0dcea",
+  great:    "#00e5a0",
+  good:     "#5bc8ff",
+  warn:     "#ffb830",
+  poor:     "#ff4f6b",
+};
 
-  body {
-    background-color: #050505; /* Slightly darker body to make the card pop */
-    color: var(--text-main);
-    font-family: 'Inter', sans-serif;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    margin: 0;
-    -webkit-font-smoothing: antialiased;
-  }
+const MONO = "'Share Tech Mono', 'Courier New', monospace";
+const DISPLAY = "'Orbitron', sans-serif";
 
-  .app-container {
-    background-color: var(--bg-dark);
-    width: 100%;
-    max-width: 420px;
-    padding: 40px;
-    border: 1px solid var(--border-color);
-    border-radius: 16px;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.75);
-  }
+/* ── Benchmarks ── */
+const BENCHMARKS = {
+  profitMargin: { label:"PROFIT MARGIN",    fmt:"pct",  great:0.20, good:0.10, warn:0.05, desc:"Net Income ÷ Revenue", invert:false },
+  roe:          { label:"RETURN ON EQUITY", fmt:"pct",  great:0.20, good:0.12, warn:0.06, desc:"Net Income ÷ Equity",  invert:false },
+  debtToEquity: { label:"DEBT / EQUITY",    fmt:"num",  great:0.3,  good:0.8,  warn:1.5,  desc:"Total Debt ÷ Equity", invert:true  },
+  pe:           { label:"P/E RATIO",        fmt:"mult", great:15,   good:25,   warn:40,   desc:"Price ÷ EPS",         invert:true  },
+  roa:          { label:"RETURN ON ASSETS", fmt:"pct",  great:0.10, good:0.05, warn:0.02, desc:"Net Income ÷ Assets", invert:false },
+  fcfYield:     { label:"FCF YIELD",        fmt:"pct",  great:0.06, good:0.03, warn:0.01, desc:"FCF ÷ Market Cap",    invert:false },
+};
 
-  /* --- Header --- */
-  header {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    margin-bottom: 40px;
-    padding-bottom: 24px;
-    border-bottom: 1px solid var(--border-color);
-  }
+function scoreRatio(key, v) {
+  if (v === null || v === undefined || isNaN(v)) return null;
+  const b = BENCHMARKS[key];
+  if (b.invert) return v<=b.great?"great":v<=b.good?"good":v<=b.warn?"warn":"poor";
+  return v>=b.great?"great":v>=b.good?"good":v>=b.warn?"warn":"poor";
+}
+function scoreColor(s) { return {great:C.great,good:C.good,warn:C.warn,poor:C.poor}[s]||C.muted; }
+function scoreLabel(s) { return {great:"STRONG",good:"GOOD",warn:"CAUTION",poor:"WEAK"}[s]||"N/A"; }
+function fmtV(key, v) {
+  if (v===null||v===undefined||isNaN(v)) return "—";
+  const b = BENCHMARKS[key];
+  if (b.fmt==="pct")  return `${(v*100).toFixed(1)}%`;
+  if (b.fmt==="mult") return `${v.toFixed(1)}×`;
+  return v.toFixed(2);
+}
+function fmtM(n) {
+  if (n===null||n===undefined) return "—";
+  if (Math.abs(n)>=1000) return `$${(n/1000).toFixed(1)}B`;
+  return `$${n.toFixed(0)}M`;
+}
 
-  .logo {
-    background-color: var(--accent);
-    color: var(--bg-dark);
-    width: 44px;
-    height: 44px;
-    border-radius: 10px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-weight: 600;
-    font-size: 1.25rem;
-    font-family: 'Playfair Display', serif;
-  }
+/* ── Ticker data ── */
+const TICKER_ITEMS = [
+  {sym:"AAPL",val:"+1.24%"},{sym:"TSLA",val:"-2.31%"},{sym:"NVDA",val:"+3.87%"},
+  {sym:"MSFT",val:"+0.55%"},{sym:"AMZN",val:"-0.78%"},{sym:"GOOGL",val:"+1.12%"},
+  {sym:"META",val:"+2.44%"},{sym:"TSM",val:"+0.93%"},{sym:"BRK",val:"-0.22%"},
+  {sym:"JPM",val:"+0.67%"},{sym:"BABA",val:"-1.86%"},{sym:"NFLX",val:"+1.38%"},
+];
 
-  .title-group h1 {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.35rem;
-    margin: 0 0 4px 0;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-  }
+/* ── Mini sparkline ── */
+function Spark({ color, up }) {
+  const pts = Array.from({length:20},(_,i)=>{
+    const base = 30 + Math.sin(i*0.6)*10 + Math.random()*8;
+    return `${i*5},${up ? 50-base*0.6 : base*0.6}`;
+  }).join(" ");
+  return (
+    <svg width="80" height="36" style={{display:"block"}}>
+      <polyline points={pts} fill="none" stroke={color} strokeWidth="1.5" opacity="0.9"/>
+    </svg>
+  );
+}
 
-  .title-group p {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.65rem;
-    letter-spacing: 2px;
-    color: var(--text-muted);
-    margin: 0;
-    text-transform: uppercase;
-  }
+/* ── HUD Radar ── */
+function HUDRadar({ spinning }) {
+  const outerRef = useRef();
+  const innerRef = useRef();
+  const frameRef = useRef();
+  const angleOut = useRef(0);
+  const angleIn  = useRef(0);
 
-  /* --- Input Section --- */
-  .input-section {
-    margin-bottom: 56px;
-  }
+  useEffect(() => {
+    if (spinning) {
+      const tick = () => {
+        angleOut.current += 0.4;
+        angleIn.current  -= 0.6;
+        if (outerRef.current) outerRef.current.style.transform = `rotate(${angleOut.current}deg)`;
+        if (innerRef.current) innerRef.current.style.transform = `rotate(${angleIn.current}deg)`;
+        frameRef.current = requestAnimationFrame(tick);
+      };
+      frameRef.current = requestAnimationFrame(tick);
+    } else {
+      cancelAnimationFrame(frameRef.current);
+    }
+    return () => cancelAnimationFrame(frameRef.current);
+  }, [spinning]);
 
-  .input-label {
-    display: block;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.7rem;
-    font-weight: 500;
-    letter-spacing: 1.5px;
-    color: var(--text-muted);
-    margin-bottom: 12px;
-    text-transform: uppercase;
-  }
+  const W = 220;
+  const cx = W/2, cy = W/2, R = W/2-4;
 
-  .input-row {
-    display: flex;
-    gap: 12px;
-  }
+  /* tick marks for outer ring */
+  const ticks = Array.from({length:72},(_,i)=>{
+    const a = (i/72)*Math.PI*2;
+    const long = i%6===0;
+    const r1 = R - (long?10:5);
+    const r2 = R;
+    return { x1:cx+r1*Math.cos(a), y1:cy+r1*Math.sin(a), x2:cx+r2*Math.cos(a), y2:cy+r2*Math.sin(a), long };
+  });
 
-  input[type="text"] {
-    flex-grow: 1;
-    background-color: var(--bg-card);
-    border: 1px solid var(--border-color);
-    color: var(--text-main);
-    padding: 14px 16px;
-    border-radius: 8px;
-    font-size: 1rem;
-    font-family: 'Inter', sans-serif;
-    outline: none;
-    transition: all 0.2s ease;
-  }
+  /* inner ring tick marks */
+  const innerTicks = Array.from({length:48},(_,i)=>{
+    const a = (i/48)*Math.PI*2;
+    const long = i%8===0;
+    const r1 = R-22+(long?0:3);
+    const r2 = R-18;
+    return { x1:cx+r1*Math.cos(a), y1:cy+r1*Math.sin(a), x2:cx+r2*Math.cos(a), y2:cy+r2*Math.sin(a) };
+  });
 
-  input[type="text"]:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 1px var(--accent);
-  }
+  return (
+    <div style={{position:"relative", width:W, height:W, margin:"0 auto"}}>
+      {/* Outer rotating ring */}
+      <svg ref={outerRef} width={W} height={W} style={{position:"absolute",top:0,left:0, willChange:"transform"}}>
+        <circle cx={cx} cy={cy} r={R} fill="none" stroke={C.teal} strokeWidth="1" opacity="0.3"/>
+        <circle cx={cx} cy={cy} r={R-14} fill="none" stroke={C.teal} strokeWidth="0.5" opacity="0.2"/>
+        {ticks.map((t,i)=>(
+          <line key={i} x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2}
+            stroke={t.long ? C.accent : C.teal}
+            strokeWidth={t.long ? 1.5 : 0.7}
+            opacity={t.long ? 0.9 : 0.4}/>
+        ))}
+        {/* cardinal markers */}
+        {["N","E","S","W"].map((l,i)=>{
+          const a = (i/4)*Math.PI*2 - Math.PI/2;
+          const r = R-7;
+          return <text key={l} x={cx+r*Math.cos(a)-4} y={cy+r*Math.sin(a)+4}
+            fill={C.accent} fontSize="7" fontFamily={MONO} opacity="0.8">{l}</text>;
+        })}
+      </svg>
 
-  button {
-    background-color: var(--accent);
-    color: var(--bg-dark);
-    border: none;
-    padding: 0 20px;
-    border-radius: 8px;
-    font-weight: 600;
-    font-size: 0.95rem;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    transition: all 0.2s ease;
-  }
+      {/* Inner counter-rotating ring */}
+      <svg ref={innerRef} width={W} height={W} style={{position:"absolute",top:0,left:0, willChange:"transform"}}>
+        <circle cx={cx} cy={cy} r={R-22} fill="none" stroke={C.teal} strokeWidth="1.5" opacity="0.5"/>
+        <circle cx={cx} cy={cy} r={R-34} fill="none" stroke={C.teal} strokeWidth="0.5" opacity="0.2"/>
+        {innerTicks.map((t,i)=>(
+          <line key={i} x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2}
+            stroke={C.teal} strokeWidth="0.8" opacity="0.5"/>
+        ))}
+        {/* Small diamonds on inner ring */}
+        {Array.from({length:4},(_,i)=>{
+          const a = (i/4)*Math.PI*2;
+          const r = R-28;
+          return <polygon key={i}
+            points={`${cx+r*Math.cos(a)},${cy+r*Math.sin(a)-4} ${cx+r*Math.cos(a)+4},${cy+r*Math.sin(a)} ${cx+r*Math.cos(a)},${cy+r*Math.sin(a)+4} ${cx+r*Math.cos(a)-4},${cy+r*Math.sin(a)}`}
+            fill={C.accent} opacity="0.8"/>;
+        })}
+      </svg>
 
-  button:hover {
-    background-color: var(--accent-hover);
-    transform: translateY(-1px);
-  }
-
-  button:active {
-    transform: translateY(1px);
-  }
-
-  /* --- Progress Section --- */
-  .progress-section {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .spinner {
-    width: 44px;
-    height: 44px;
-    border: 2px solid var(--border-color);
-    border-top-color: var(--accent);
-    border-radius: 50%;
-    animation: spin 1s cubic-bezier(0.55, 0.15, 0.45, 0.85) infinite;
-    margin-bottom: 32px;
-  }
-
-  @keyframes spin {
-    to { transform: rotate(360deg); }
-  }
-
-  .status-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    width: 100%;
-    max-width: 300px; /* Constrain width to stagger the text nicely */
-  }
-
-  .status-list li {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.8rem;
-    margin-bottom: 14px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    transition: color 0.3s ease;
-  }
-
-  /* States */
-  .status-list .done { color: var(--accent); }
-  .status-list .active { color: var(--text-main); animation: pulse 2s infinite; }
-  .status-list .pending { color: var(--text-dim); }
-
-  /* Indentation to mimic the original image */
-  .status-list li:nth-child(2) { margin-left: 16px; }
-  .status-list li:nth-child(3) { margin-left: 32px; }
-  .status-list li:nth-child(4) { margin-left: 32px; }
-  .status-list li:nth-child(5) { margin-left: 32px; }
-
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
-  }
-
-</style>
-</head>
-<body>
-
-<div class="app-container">
-  
-  <header>
-    <div class="logo">F</div>
-    <div class="title-group">
-      <h1>FHI Framework</h1>
-      <p>Financial Health Investment</p>
+      {/* Static center core */}
+      <svg width={W} height={W} style={{position:"absolute",top:0,left:0}}>
+        {/* Crosshairs */}
+        <line x1={cx} y1={cy-R+40} x2={cx} y2={cy-16} stroke={C.teal} strokeWidth="0.5" opacity="0.4"/>
+        <line x1={cx} y1={cy+16}   x2={cx} y2={cy+R-40} stroke={C.teal} strokeWidth="0.5" opacity="0.4"/>
+        <line x1={cx-R+40} y1={cy} x2={cx-16} y2={cy}   stroke={C.teal} strokeWidth="0.5" opacity="0.4"/>
+        <line x1={cx+16}   y1={cy} x2={cx+R-40} y2={cy} stroke={C.teal} strokeWidth="0.5" opacity="0.4"/>
+        {/* Inner circles */}
+        <circle cx={cx} cy={cy} r={14} fill="none" stroke={C.accent} strokeWidth="1.5" opacity="0.7"/>
+        <circle cx={cx} cy={cy} r={6}  fill={C.accent} opacity={spinning ? 1 : 0.4}/>
+        {/* Glow sweep when spinning */}
+        {spinning && (
+          <circle cx={cx} cy={cy} r={14} fill="none" stroke={C.accent} strokeWidth="4" opacity="0.2"/>
+        )}
+        {/* Corner brackets */}
+        {[[-1,-1],[1,-1],[1,1],[-1,1]].map(([sx,sy],i)=>{
+          const bx = cx + sx*(R-42), by = cy + sy*(R-42);
+          return <g key={i}>
+            <line x1={bx} y1={by} x2={bx+sx*(-8)} y2={by}        stroke={C.teal} strokeWidth="1.5" opacity="0.6"/>
+            <line x1={bx} y1={by} x2={bx}          y2={by+sy*(-8)} stroke={C.teal} strokeWidth="1.5" opacity="0.6"/>
+          </g>;
+        })}
+      </svg>
     </div>
-  </header>
+  );
+}
 
-  <main>
-    <div class="input-section">
-      <label class="input-label" for="company">Company Name</label>
-      <div class="input-row">
-        <input type="text" id="company" value="Tsmc" spellcheck="false" />
-        <button>Analyze &rarr;</button>
+/* ── Progress Steps ── */
+const STEPS = [
+  "SEARCHING FINANCIAL DATABASES...",
+  "PARSING INCOME STATEMENT...",
+  "ANALYZING BALANCE SHEET...",
+  "COMPUTING RATIOS...",
+  "WRITING INVESTMENT MEMO...",
+];
+
+function StepList({ currentStep }) {
+  return (
+    <div style={{marginTop:20, display:"flex", flexDirection:"column", gap:6, alignItems:"flex-start", paddingLeft:16}}>
+      {STEPS.map((s,i)=>{
+        const done    = i < currentStep;
+        const active  = i === currentStep;
+        const pending = i > currentStep;
+        return (
+          <div key={s} style={{display:"flex", alignItems:"center", gap:10}}>
+            <span style={{
+              fontFamily:MONO, fontSize:13, width:16, textAlign:"center",
+              color: done ? C.accent : active ? C.accent : C.dim
+            }}>
+              {done ? "✓" : active ? "›" : "•"}
+            </span>
+            <span style={{
+              fontFamily:MONO, fontSize:11, letterSpacing:"0.08em",
+              color: done ? C.accent : active ? C.text : C.dim,
+              fontWeight: active ? "bold" : "normal",
+              background: active ? `${C.accent}15` : "transparent",
+              padding: active ? "2px 8px" : "2px 0",
+              borderRadius: 3,
+              border: active ? `1px solid ${C.accent}44` : "1px solid transparent",
+            }}>{s}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ── Ratio Card ── */
+function RatioCard({ ratioKey, value, delay=0 }) {
+  const s = scoreRatio(ratioKey, value);
+  const c = scoreColor(s);
+  const b = BENCHMARKS[ratioKey];
+  const [vis, setVis] = useState(false);
+  useEffect(()=>{const t=setTimeout(()=>setVis(true),delay);return()=>clearTimeout(t);},[delay]);
+  return (
+    <div style={{
+      background:C.card, border:`1px solid ${C.border}`, borderRadius:4,
+      padding:"14px 16px", position:"relative", overflow:"hidden",
+      opacity:vis?1:0, transform:vis?"translateY(0)":"translateY(10px)",
+      transition:"opacity 0.4s, transform 0.4s",
+    }}>
+      <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:c}}/>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+        <span style={{fontSize:9,letterSpacing:"0.14em",color:C.muted,fontFamily:MONO}}>{b.label}</span>
+        {s && <span style={{fontSize:8,color:c,background:`${c}18`,border:`1px solid ${c}33`,borderRadius:2,padding:"1px 6px",fontFamily:MONO,letterSpacing:"0.1em"}}>{scoreLabel(s)}</span>}
+      </div>
+      <div style={{fontSize:26,fontWeight:"bold",color:c,fontFamily:DISPLAY,letterSpacing:"-0.5px",marginBottom:4}}>{fmtV(ratioKey,value)}</div>
+      <div style={{fontSize:9,color:C.dim,fontFamily:MONO}}>{b.desc}</div>
+    </div>
+  );
+}
+
+function StatRow({label,value}) {
+  return (
+    <div style={{display:"flex",justifyContent:"space-between",padding:"7px 0",borderBottom:`1px solid ${C.border}`}}>
+      <span style={{fontSize:10,color:C.muted,fontFamily:MONO}}>{label}</span>
+      <span style={{fontSize:11,color:C.text,fontFamily:MONO}}>{value}</span>
+    </div>
+  );
+}
+
+/* ── Clock ── */
+function Clock() {
+  const [now, setNow] = useState(new Date());
+  useEffect(()=>{const t=setInterval(()=>setNow(new Date()),1000);return()=>clearInterval(t);},[]);
+  const d = now.toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"}).toUpperCase();
+  const t = now.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
+  return <span style={{fontFamily:MONO,fontSize:11,color:C.muted,letterSpacing:"0.08em"}}>{d} | {t} SAST</span>;
+}
+
+/* ── Ticker ── */
+function Ticker() {
+  const items = [...TICKER_ITEMS,...TICKER_ITEMS];
+  return (
+    <div style={{overflow:"hidden",borderTop:`1px solid ${C.border}`,borderBottom:`1px solid ${C.border}`,background:C.panel,padding:"6px 0",position:"relative"}}>
+      <div style={{display:"flex",gap:32,animation:"ticker 28s linear infinite",whiteSpace:"nowrap"}}>
+        {items.map((item,i)=>{
+          const up = item.val.startsWith("+");
+          return (
+            <span key={i} style={{fontFamily:MONO,fontSize:11,letterSpacing:"0.06em",color:C.muted,flexShrink:0}}>
+              <span style={{color:C.text}}>{item.sym}</span>
+              {" "}
+              <span style={{color:up?C.great:C.poor}}>{item.val}</span>
+              <span style={{color:C.dim}}> •</span>
+            </span>
+          );
+        })}
+      </div>
+      <style>{`@keyframes ticker { from{transform:translateX(0)} to{transform:translateX(-50%)} }`}</style>
+    </div>
+  );
+}
+
+/* ── Hex Shield Logo ── */
+function HexLogo() {
+  return (
+    <svg width="48" height="54" viewBox="0 0 48 54">
+      <polygon points="24,2 46,14 46,38 24,50 2,38 2,14" fill="none" stroke={C.muted} strokeWidth="1.5"/>
+      <polygon points="24,6 42,16 42,36 24,46 6,36 6,16" fill={C.card} stroke={C.dim} strokeWidth="0.5"/>
+      <text x="24" y="31" textAnchor="middle" fontFamily={DISPLAY} fontSize="16" fontWeight="bold" fill={C.text}>F</text>
+    </svg>
+  );
+}
+
+/* ══════════════════════════════════════════════
+   MAIN APP
+══════════════════════════════════════════════ */
+export default function FHIApp() {
+  const [company, setCompany]   = useState("");
+  const [phase, setPhase]       = useState("idle");   // idle | loading | done | error
+  const [loaderStep, setStep]   = useState(0);
+  const [result, setResult]     = useState(null);
+  const [statusMsg, setStatus]  = useState("Awaiting input. Enter a company name to begin FHI analysis.");
+  const inputRef = useRef();
+
+  const miniCharts = [
+    {color:C.great, up:true},{color:C.poor, up:false},{color:C.good, up:true},{color:C.great, up:true},{color:C.warn, up:false}
+  ];
+
+  const analyze = async () => {
+    if (!company.trim() || phase==="loading") return;
+    setPhase("loading");
+    setResult(null);
+    setStep(0);
+    setStatus(`Initiating analysis for ${company.trim()}. Searching financial databases...`);
+
+    try {
+      setStep(1);
+      const dataRes = await fetch("https://api.anthropic.com/v1/messages", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({
+          model:"claude-sonnet-4-20250514",
+          max_tokens:1000,
+          tools:[{type:"web_search_20250305",name:"web_search"}],
+          messages:[{role:"user",content:`You are a financial data researcher. Find the most recent annual financial data for: "${company.trim()}". Search the web for their latest 10-K, annual report, or financial data page. Return ONLY valid JSON — no markdown, no explanation — with exactly this structure:
+{
+  "companyName": "Full official name",
+  "ticker": "TICKER",
+  "fiscalYear": "FY2024",
+  "revenue": <millions or null>,
+  "grossProfit": <millions or null>,
+  "netIncome": <millions or null>,
+  "totalAssets": <millions or null>,
+  "totalEquity": <millions or null>,
+  "totalDebt": <millions or null>,
+  "freeCashFlow": <millions or null>,
+  "marketCap": <millions or null>,
+  "sharePrice": <number or null>,
+  "eps": <number or null>,
+  "dataNote": "Source and date"
+}
+Plain numbers only. No $ signs. No commas.`}],
+        }),
+      });
+
+      setStep(2);
+      const dj = await dataRes.json();
+      const raw = (dj.content||[]).filter(b=>b.type==="text").map(b=>b.text).join("").trim();
+      const fin = JSON.parse(raw.replace(/```json|```/g,"").trim());
+      setStatus(`Data retrieved for ${fin.companyName} (${fin.ticker}). Parsing income statement and balance sheet...`);
+
+      setStep(3);
+      const ratios = {
+        profitMargin: fin.revenue&&fin.netIncome!==null   ? fin.netIncome/fin.revenue : null,
+        roe:          fin.totalEquity&&fin.netIncome!==null? fin.netIncome/fin.totalEquity : null,
+        debtToEquity: fin.totalEquity&&fin.totalDebt!==null? fin.totalDebt/fin.totalEquity : null,
+        pe:           fin.eps&&fin.eps!==0&&fin.sharePrice ? fin.sharePrice/fin.eps : null,
+        roa:          fin.totalAssets&&fin.netIncome!==null? fin.netIncome/fin.totalAssets : null,
+        fcfYield:     fin.marketCap&&fin.freeCashFlow!==null? fin.freeCashFlow/fin.marketCap : null,
+      };
+      setStatus(`Ratios computed. Generating investment memo for ${fin.companyName}...`);
+
+      setStep(4);
+      const aRes = await fetch("https://api.anthropic.com/v1/messages", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({
+          model:"claude-sonnet-4-20250514",
+          max_tokens:1000,
+          messages:[{role:"user",content:`Senior equity analyst using the FHI Framework. Analyze ${fin.companyName} (${fin.ticker}, ${fin.fiscalYear}).
+
+Metrics: Profit Margin ${fmtV("profitMargin",ratios.profitMargin)}, ROE ${fmtV("roe",ratios.roe)}, D/E ${fmtV("debtToEquity",ratios.debtToEquity)}, P/E ${fmtV("pe",ratios.pe)}, ROA ${fmtV("roa",ratios.roa)}, FCF Yield ${fmtV("fcfYield",ratios.fcfYield)}.
+Revenue ${fmtM(fin.revenue)}, Net Income ${fmtM(fin.netIncome)}, Market Cap ${fmtM(fin.marketCap)}.
+
+Write 3 short flowing paragraphs: (1) profitability & efficiency, (2) financial health & leverage, (3) valuation verdict for long-term investors. Be direct. Use numbers. Max 180 words. No headers, no bullets.`}],
+        }),
+      });
+      const aj = await aRes.json();
+      const analysis = (aj.content||[]).filter(b=>b.type==="text").map(b=>b.text).join("").trim();
+
+      const scores = Object.entries(ratios).map(([k,v])=>scoreRatio(k,v)).filter(Boolean);
+      const sm={great:4,good:3,warn:2,poor:1};
+      const avg = scores.length ? scores.reduce((a,s)=>a+sm[s],0)/scores.length : null;
+      const grade = !avg?null:avg>=3.5?"A":avg>=2.8?"B":avg>=2?"C":"D";
+
+      setResult({fin,ratios,analysis,grade});
+      setStatus(`Analysis complete for ${fin.companyName}. FHI Grade: ${grade||"N/A"}. ${fin.dataNote||""}`);
+      setPhase("done");
+    } catch(err) {
+      console.error(err);
+      setStatus("ERROR: Failed to retrieve financial data. Check company name and retry.");
+      setPhase("error");
+    }
+  };
+
+  const gradeColor = result ? ({A:C.great,B:C.good,C:C.warn,D:C.poor}[result.grade]||C.muted) : C.muted;
+  const spinning = phase==="loading";
+
+  return (
+    <div style={{minHeight:"100vh",background:C.bg,color:C.text,fontFamily:MONO,display:"flex",flexDirection:"column"}}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;900&family=Share+Tech+Mono&display=swap');
+        *{box-sizing:border-box;margin:0;padding:0;}
+        input::placeholder{color:#3a4d63;}
+        input{caret-color:#c8f135;}
+        ::-webkit-scrollbar{width:4px;} ::-webkit-scrollbar-thumb{background:#1a2535;}
+      `}</style>
+
+      {/* ── HEADER ── */}
+      <div style={{background:C.panel,borderBottom:`1px solid ${C.border}`,padding:"12px 20px",display:"flex",alignItems:"center",gap:14}}>
+        <HexLogo/>
+        <div>
+          <div style={{fontFamily:DISPLAY,fontSize:20,fontWeight:700,letterSpacing:"0.05em",color:C.text}}>FHI Framework</div>
+          <div style={{fontSize:10,color:C.muted,letterSpacing:"0.25em"}}>FINANCIAL HEALTH INVESTMENT</div>
+        </div>
+      </div>
+
+      {/* ── LOCATION / CLOCK ── */}
+      <div style={{padding:"8px 20px",textAlign:"right",background:C.panel,borderBottom:`1px solid ${C.border}`}}>
+        <Clock/>
+      </div>
+
+      <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"auto"}}>
+        <div style={{maxWidth:820,width:"100%",margin:"0 auto",padding:"20px 16px",flex:1,display:"flex",flexDirection:"column",gap:16}}>
+
+          {/* ── SEARCH ── */}
+          <div style={{background:C.panel,border:`1px solid ${C.border}`,borderRadius:6,padding:"14px 16px"}}>
+            <div style={{fontSize:10,letterSpacing:"0.2em",color:C.muted,marginBottom:10}}>COMPANY NAME</div>
+            <div style={{display:"flex",gap:10}}>
+              <div style={{flex:1,display:"flex",alignItems:"center",background:C.card,border:`1px solid ${C.border}`,borderRadius:5,padding:"0 14px",gap:10}}>
+                <input
+                  ref={inputRef}
+                  value={company}
+                  onChange={e=>setCompany(e.target.value)}
+                  onKeyDown={e=>e.key==="Enter"&&analyze()}
+                  placeholder="Enter company name..."
+                  style={{flex:1,background:"transparent",border:"none",outline:"none",color:C.text,fontFamily:MONO,fontSize:16,padding:"12px 0"}}
+                />
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.dim} strokeWidth="2">
+                  <circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="22" y2="22"/>
+                </svg>
+              </div>
+              <button
+                onClick={analyze}
+                disabled={phase==="loading"||!company.trim()}
+                style={{padding:"12px 24px",background:company.trim()&&phase!=="loading"?C.accent:"#2a3545",color:company.trim()&&phase!=="loading"?"#0a0e14":C.dim,border:"none",borderRadius:5,fontWeight:700,fontSize:15,cursor:company.trim()&&phase!=="loading"?"pointer":"not-allowed",fontFamily:DISPLAY,letterSpacing:"0.05em",whiteSpace:"nowrap",transition:"all 0.2s"}}>
+                ANALYZE →
+              </button>
+            </div>
+          </div>
+
+          {/* ── HUD AREA (idle or loading) ── */}
+          {(phase==="idle"||phase==="loading"||phase==="error") && (
+            <div style={{background:C.panel,border:`1px solid ${C.border}`,borderRadius:6,padding:"28px 16px",display:"flex",flexDirection:"column",alignItems:"center",minHeight:360}}>
+              <HUDRadar spinning={spinning}/>
+              {phase==="idle" && (
+                <div style={{marginTop:24,fontSize:12,color:C.dim,letterSpacing:"0.12em",textAlign:"center"}}>
+                  SYSTEM READY — AWAITING INPUT
+                </div>
+              )}
+              {phase==="loading" && <StepList currentStep={loaderStep}/>}
+              {phase==="error" && (
+                <div style={{marginTop:20,color:C.poor,fontFamily:MONO,fontSize:13,textAlign:"center",letterSpacing:"0.08em"}}>
+                  ⚠ DATA RETRIEVAL FAILED<br/>
+                  <span style={{fontSize:10,color:C.dim,marginTop:8,display:"block"}}>Check company name and retry</span>
+                  <button onClick={()=>{setPhase("idle");setCompany("");setTimeout(()=>inputRef.current?.focus(),100);}}
+                    style={{marginTop:14,padding:"8px 20px",background:"transparent",border:`1px solid ${C.border}`,color:C.muted,borderRadius:4,cursor:"pointer",fontFamily:MONO,fontSize:11,letterSpacing:"0.1em"}}>
+                    RETRY
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── RESULTS ── */}
+          {phase==="done" && result && (()=>{
+            const {fin,ratios,analysis,grade} = result;
+            return (
+              <div style={{display:"flex",flexDirection:"column",gap:14}}>
+                {/* Company title */}
+                <div style={{background:C.panel,border:`1px solid ${C.border}`,borderRadius:6,padding:"16px 20px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  <div>
+                    <div style={{fontFamily:DISPLAY,fontSize:22,fontWeight:700,letterSpacing:"0.05em",marginBottom:8}}>{fin.companyName}</div>
+                    <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
+                      {fin.ticker&&<span style={{fontSize:10,color:C.accent,border:`1px solid ${C.accent}44`,background:`${C.accent}12`,borderRadius:3,padding:"2px 10px",letterSpacing:"0.1em"}}>{fin.ticker}</span>}
+                      {fin.fiscalYear&&<span style={{fontSize:10,color:C.muted,letterSpacing:"0.08em"}}>{fin.fiscalYear}</span>}
+                      {fin.sharePrice&&<span style={{fontSize:10,color:C.muted}}>${fin.sharePrice.toFixed(2)}/SHARE</span>}
+                    </div>
+                  </div>
+                  {grade && (
+                    <div style={{textAlign:"center"}}>
+                      <div style={{fontSize:8,color:C.muted,letterSpacing:"0.2em",marginBottom:6}}>FHI GRADE</div>
+                      <div style={{width:56,height:56,border:`2px solid ${gradeColor}`,borderRadius:6,display:"flex",alignItems:"center",justifyContent:"center",background:`${gradeColor}12`}}>
+                        <span style={{fontFamily:DISPLAY,fontSize:30,fontWeight:900,color:gradeColor}}>{grade}</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Ratios */}
+                <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10}}>
+                  {Object.keys(BENCHMARKS).map((k,i)=><RatioCard key={k} ratioKey={k} value={ratios[k]} delay={i*60}/>)}
+                </div>
+
+                {/* Financials */}
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+                  <div style={{background:C.panel,border:`1px solid ${C.border}`,borderRadius:6,padding:"14px 18px"}}>
+                    <div style={{fontSize:9,color:C.muted,letterSpacing:"0.2em",marginBottom:10}}>INCOME STATEMENT</div>
+                    <StatRow label="REVENUE"       value={fmtM(fin.revenue)}/>
+                    <StatRow label="GROSS PROFIT"  value={fmtM(fin.grossProfit)}/>
+                    <StatRow label="NET INCOME"    value={fmtM(fin.netIncome)}/>
+                  </div>
+                  <div style={{background:C.panel,border:`1px solid ${C.border}`,borderRadius:6,padding:"14px 18px"}}>
+                    <div style={{fontSize:9,color:C.muted,letterSpacing:"0.2em",marginBottom:10}}>BALANCE SHEET / CASH FLOW</div>
+                    <StatRow label="TOTAL ASSETS"   value={fmtM(fin.totalAssets)}/>
+                    <StatRow label="TOTAL EQUITY"   value={fmtM(fin.totalEquity)}/>
+                    <StatRow label="TOTAL DEBT"     value={fmtM(fin.totalDebt)}/>
+                    <StatRow label="FREE CASH FLOW" value={fmtM(fin.freeCashFlow)}/>
+                    <StatRow label="MARKET CAP"     value={fmtM(fin.marketCap)}/>
+                  </div>
+                </div>
+
+                {/* Analysis */}
+                <div style={{background:C.panel,border:`1px solid ${C.border}`,borderRadius:6,padding:"16px 20px"}}>
+                  <div style={{fontSize:9,color:C.muted,letterSpacing:"0.2em",marginBottom:12}}>INVESTMENT ANALYSIS</div>
+                  <div style={{fontSize:13,lineHeight:1.85,color:C.text,whiteSpace:"pre-wrap"}}>{analysis}</div>
+                </div>
+
+                <div style={{textAlign:"center"}}>
+                  <button onClick={()=>{setPhase("idle");setResult(null);setCompany("");setStatus("Awaiting input.");setTimeout(()=>inputRef.current?.focus(),100);}}
+                    style={{padding:"10px 26px",background:"transparent",border:`1px solid ${C.border}`,color:C.muted,borderRadius:4,cursor:"pointer",fontFamily:MONO,fontSize:11,letterSpacing:"0.12em",transition:"all 0.2s"}}
+                    onMouseEnter={e=>{e.target.style.borderColor=C.accent;e.target.style.color=C.accent;}}
+                    onMouseLeave={e=>{e.target.style.borderColor=C.border;e.target.style.color=C.muted;}}>
+                    ANALYZE ANOTHER COMPANY
+                  </button>
+                </div>
+              </div>
+            );
+          })()}
+        </div>
+      </div>
+
+      {/* ── TICKER ── */}
+      <Ticker/>
+
+      {/* ── MINI CHARTS ── */}
+      <div style={{background:C.panel,borderTop:`1px solid ${C.border}`,display:"flex",gap:0,overflow:"hidden"}}>
+        {miniCharts.map((c,i)=>(
+          <div key={i} style={{flex:1,borderRight:`1px solid ${C.border}`,padding:"8px 4px",background: i===2?`${C.good}08`:C.panel}}>
+            <Spark color={c.color} up={c.up}/>
+          </div>
+        ))}
+      </div>
+
+      {/* ── STATUS BAR ── */}
+      <div style={{background:C.card,borderTop:`1px solid ${C.border}`,padding:"12px 16px",display:"flex",alignItems:"flex-start",gap:12}}>
+        <div style={{flex:1,fontSize:12,color:C.muted,lineHeight:1.6,fontFamily:MONO}}>{statusMsg}</div>
+        <svg width="18" height="18" viewBox="0 0 20 20" style={{flexShrink:0,marginTop:2}}>
+          <polygon points="10,1 19,10 10,19 1,10" fill="none" stroke={C.dim} strokeWidth="1.5"/>
+          <polygon points="10,5 15,10 10,15 5,10"  fill={C.dim} opacity="0.5"/>
+        </svg>
       </div>
     </div>
-
-    <div class="progress-section">
-      <div class="spinner"></div>
-      <ul class="status-list">
-        <li class="done">✓ Searching financial databases...</li>
-        <li class="active">› Parsing income statement...</li>
-        <li class="pending">· Analyzing balance sheet...</li>
-        <li class="pending">· Computing ratios...</li>
-        <li class="pending">· Writing investment memo...</li>
-      </ul>
-    </div>
-  </main>
-
-</div>
-
-</body>
-</html>
-
-```
+  );
+}
